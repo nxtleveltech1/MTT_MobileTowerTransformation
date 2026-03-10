@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Profile {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clerkUserId   String   @unique @map("clerk_user_id")
+  displayName   String?  @map("display_name")
+  role          String   @default("viewer") // viewer | operator | admin
+  avatarUrl     String?  @map("avatar_url")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@index([clerkUserId])
+  @@map("profiles")
+}
+
+model Tower {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code       String   @unique
+  name       String
+  status     String   // online | warning | offline
+  technology String
+  lat        Decimal? @db.Decimal(10, 6)
+  lng        Decimal? @db.Decimal(10, 6)
+  prbUsage   Int      @default(0) @map("prb_usage")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at")
+
+  metrics TowerMetric[]
+  alerts  Alert[]
+
+  @@map("towers")
+}
+
+model TowerMetric {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  towerId       String   @map("tower_id") @db.Uuid
+  usersCount    Int      @default(0) @map("users_count")
+  throughputGbps Decimal @default(0) @map("throughput_gbps") @db.Decimal(10, 4)
+  recordedAt    DateTime @default(now()) @map("recorded_at")
+
+  tower Tower @relation(fields: [towerId], references: [id], onDelete: Cascade)
+
+  @@index([towerId, recordedAt(sort: Desc)])
+  @@map("tower_metrics")
+}
+
+model Alert {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  towerId   String?   @map("tower_id") @db.Uuid
+  severity  String    // info | warning | critical
+  message   String
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  tower Tower? @relation(fields: [towerId], references: [id], onDelete: SetNull)
+
+  @@index([towerId, createdAt(sort: Desc)])
+  @@map("alerts")
+}

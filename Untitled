@@ -1,0 +1,14 @@
+# Neon (Cell Tower Monitor project: shiny-shape-17060567)
+# Get URLs from Neon Console or MCP get_connection_string
+DATABASE_URL=postgresql://neondb_owner:npg_ukm2iKs3YjHp@ep-soft-frost-aem1183y-pooler.c-2.us-east-2.aws.neon.tech/neondb?channel_binding=require&sslmode=require
+DIRECT_URL=postgresql://neondb_owner:npg_ukm2iKs3YjHp@ep-soft-frost-aem1183y.c-2.us-east-2.aws.neon.tech/neondb?channel_binding=require&sslmode=require
+
+# Clerk - create app at https://dashboard.clerk.com
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_aW52aXRpbmctYmFkZ2VyLTM1LmNsZXJrLmFjY291bnRzLmRldiQ
+CLERK_SECRET_KEY=sk_test_MYMP9auAVi51v6TqtSWlBiThxHTlRvFbSCqp5FIqSG
+
+# Optional: custom sign-in/sign-up paths (we use /sign-in, /sign-up)
+NEXT_PUBLIC_CLERK_SIGN_IN_URL="/sign-in"
+NEXT_PUBLIC_CLERK_SIGN_UP_URL="/sign-up"
+NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL="/"
+NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL="/"
