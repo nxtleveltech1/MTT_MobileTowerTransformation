@@ -92,6 +92,10 @@ export function Sidebar() {
             appearance={{
               elements: {
                 avatarBox: "h-8 w-8 rounded-lg border border-sidebar-border",
+                rootBox: "relative z-50",
+                cardBox: "z-[100]",
+                card: "z-[100]",
+                popoverCard: "z-[100]",
               },
               variables: {
                 colorPrimary: "oklch(0.7 0.15 160)",
@@ -101,7 +105,6 @@ export function Sidebar() {
                 borderRadius: "0.5rem",
               },
             }}
-            afterSignOutUrl="/sign-in"
           />
           {!collapsed && (
             <span className="text-sm text-sidebar-foreground truncate">Account</span>
