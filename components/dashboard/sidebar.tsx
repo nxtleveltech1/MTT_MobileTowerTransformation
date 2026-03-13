@@ -44,7 +44,7 @@ export function Sidebar() {
         {!collapsed && (
           <div className="flex items-center gap-2">
             <Signal className="h-6 w-6 text-primary" />
-            <span className="text-lg font-semibold text-sidebar-foreground">CellTower</span>
+            <span className="text-lg font-semibold text-sidebar-foreground">MTT</span>
           </div>
         )}
         {collapsed && <Signal className="mx-auto h-6 w-6 text-primary" />}

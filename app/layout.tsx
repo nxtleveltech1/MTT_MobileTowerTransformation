@@ -8,8 +8,8 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'CellTower Monitor - Network Operations Center',
-  description: 'Cellular tower traffic monitoring and analytics platform for telecom operators',
+  title: 'MTT - Mobile Tower Transformation',
+  description: 'Mobile Tower Transformation — monitoring and analytics for telecom operators',
   generator: 'v0.app',
   icons: {
     icon: [
