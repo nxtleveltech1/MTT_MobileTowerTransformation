@@ -40,11 +40,14 @@ export function Sidebar() {
         collapsed ? "w-16" : "w-64"
       )}
     >
-      <div className="flex h-16 items-center justify-between border-b border-border px-4">
+      <div className="flex min-h-16 items-center justify-between border-b border-border px-4 py-3">
         {!collapsed && (
-          <div className="flex items-center gap-2">
-            <Signal className="h-6 w-6 text-primary" />
-            <span className="text-lg font-semibold text-sidebar-foreground">MTT</span>
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <Signal className="h-6 w-6 shrink-0 text-primary" />
+            <div className="flex min-w-0 flex-col">
+              <span className="text-lg font-semibold text-sidebar-foreground leading-tight">MTT</span>
+              <span className="text-xs text-muted-foreground leading-tight">Mobile Tower Transformation</span>
+            </div>
           </div>
         )}
         {collapsed && <Signal className="mx-auto h-6 w-6 text-primary" />}
