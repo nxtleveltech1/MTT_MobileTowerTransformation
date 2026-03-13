@@ -50,7 +50,20 @@ export default function RootLayout({
       : null
 
   return (
-    <ClerkProvider publishableKey={publishableKey} dynamic unsafe_disableDevelopmentModeConsoleWarning>
+    <ClerkProvider
+      publishableKey={publishableKey}
+      dynamic
+      unsafe_disableDevelopmentModeConsoleWarning
+      appearance={{
+        variables: {
+          colorPrimary: "oklch(0.7 0.15 160)",
+          colorBackground: "oklch(0.09 0 0)",
+          colorInputBackground: "oklch(0.12 0 0)",
+          colorInputText: "oklch(0.95 0 0)",
+          borderRadius: "0.5rem",
+        },
+      }}
+    >
       <html lang="en">
         <body className="font-sans antialiased" suppressHydrationWarning>
           {clerkKeyMessage && (
