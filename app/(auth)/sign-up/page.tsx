@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useSignUp } from "@clerk/nextjs"
+import { CLERK_LOAD_FAILED_MESSAGE, AUTH_STILL_LOADING_MESSAGE } from "@/lib/auth-messages"
 import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -39,7 +40,7 @@ function SignUpForm() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!isLoaded || !signUp) {
-      setError("Auth is still loading. Refresh the page (button above) and try again.")
+      setError(AUTH_STILL_LOADING_MESSAGE)
       return
     }
     setError(null)
@@ -98,7 +99,7 @@ function SignUpForm() {
         <CardContent className="space-y-4">
           {!isLoaded && showFormAnyway && (
             <div className="text-sm text-muted-foreground">
-              <p>Clerk didn’t load. <strong>Stop the dev server</strong> (Ctrl+C), run <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">bun run dev</code> again, then refresh this page.</p>
+              <p>{CLERK_LOAD_FAILED_MESSAGE}</p>
             </div>
           )}
           {error && (

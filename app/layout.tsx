@@ -38,19 +38,24 @@ export default function RootLayout({
   const publishableKey = (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "").trim()
   const hasClerkKey = publishableKey.length > 0
   const keyMaybeTruncated = hasClerkKey && publishableKey.length < 50
+  const isProd = process.env.NODE_ENV === "production"
+  const clerkKeyMessage = !hasClerkKey
+    ? isProd
+      ? "Clerk key not configured. Add NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY to Vercel environment variables and redeploy."
+      : "Clerk key not loaded. Restart the dev server so Next.js picks up .env.local."
+    : keyMaybeTruncated
+      ? isProd
+        ? "Clerk publishable key may be truncated. Add the full key from Clerk Dashboard to Vercel env vars."
+        : "Publishable key may be truncated. Copy the full key from Clerk Dashboard into .env.local."
+      : null
 
   return (
     <ClerkProvider publishableKey={publishableKey} dynamic unsafe_disableDevelopmentModeConsoleWarning>
       <html lang="en">
         <body className="font-sans antialiased" suppressHydrationWarning>
-          {!hasClerkKey && (
+          {clerkKeyMessage && (
             <div className="bg-amber-500/10 text-amber-800 dark:text-amber-200 border-b border-amber-500/20 px-4 py-2 text-center text-xs">
-              Clerk key not loaded in this process. Restart the dev server so Next.js picks up .env.local.
-            </div>
-          )}
-          {keyMaybeTruncated && (
-            <div className="bg-amber-500/10 text-amber-800 dark:text-amber-200 border-b border-amber-500/20 px-4 py-2 text-center text-xs">
-              Publishable key may be truncated (under 50 chars). Copy the full key from Clerk Dashboard into .env.local.
+              {clerkKeyMessage}
             </div>
           )}
           {children}
