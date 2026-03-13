@@ -1,6 +1,8 @@
 "use client"
 
 import dynamic from "next/dynamic"
+import { Suspense } from "react"
+import { useSearchParams } from "next/navigation"
 import { Header } from "@/components/dashboard/header"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -12,11 +14,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { cn } from "@/lib/utils"
 import { Signal, Users, Zap, Layers, MapPin, Radio } from "lucide-react"
 import type { TowerLocation } from "@/components/coverage/coverage-map"
-import { towerLocations } from "@/lib/mock-towers"
+import { towerLocations, filterTowersByRegion } from "@/lib/mock-towers"
 
 const CoverageMap = dynamic(
   () => import("@/components/coverage/coverage-map").then((m) => m.CoverageMap),
@@ -48,10 +50,17 @@ const statusColors = {
   offline: "bg-destructive",
 }
 
-export default function CoveragePage() {
+function CoverageContent() {
+  const searchParams = useSearchParams()
+  const highlightTowerId = searchParams.get("tower")
   const [selectedRegion, setSelectedRegion] = useState("all")
-  const [mapLayer, setMapLayer] = useState("towers")
+  const [mapLayer, setMapLayer] = useState<"towers" | "heatmap" | "signal">("towers")
   const [selectedTower, setSelectedTower] = useState<TowerLocation | null>(null)
+
+  const filteredTowers = useMemo(
+    () => filterTowersByRegion(towerLocations, selectedRegion),
+    [selectedRegion]
+  )
 
   return (
     <>
@@ -95,11 +104,13 @@ export default function CoveragePage() {
               <CardContent>
                 <div className="relative h-[500px] rounded-lg border border-border overflow-hidden">
                   <CoverageMap
-                    towers={towerLocations}
+                    towers={filteredTowers}
                     onTowerSelect={setSelectedTower}
+                    layer={mapLayer}
+                    highlightTowerId={highlightTowerId}
                   />
 
-                  <div className="absolute bottom-4 left-4 z-[1000] flex items-center gap-5 rounded-lg border border-border bg-card/95 px-4 py-3 backdrop-blur">
+                  <div className="absolute bottom-4 left-4 z-[1000] flex items-center gap-5 rounded-lg border border-border bg-card px-4 py-3">
                     <div className="flex items-center gap-2">
                       <div className="h-4 w-4 rounded-full border-2 border-green-600 bg-green-500 shadow-sm" />
                       <span className="text-sm font-medium text-foreground">Online</span>
@@ -115,7 +126,7 @@ export default function CoveragePage() {
                   </div>
 
                   {selectedTower && (
-                    <div className="absolute right-4 bottom-4 z-[1000] w-64 rounded-lg border border-border bg-card/95 p-4 backdrop-blur">
+                    <div className="absolute right-4 bottom-4 z-[1000] w-64 rounded-lg border border-border bg-card p-4">
                       <div className="mb-2 flex items-center justify-between">
                         <span className="font-medium text-foreground">{selectedTower.id}</span>
                         <Badge className={cn(statusColors[selectedTower.status as keyof typeof statusColors], "text-foreground")}>
@@ -215,5 +226,13 @@ export default function CoveragePage() {
         </div>
       </div>
     </>
+  )
+}
+
+export default function CoveragePage() {
+  return (
+    <Suspense fallback={<div className="flex-1 overflow-auto p-6"><span className="text-muted-foreground">Loading…</span></div>}>
+      <CoverageContent />
+    </Suspense>
   )
 }

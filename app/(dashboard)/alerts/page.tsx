@@ -1,5 +1,7 @@
 "use client"
 
+import { Suspense } from "react"
+import { useSearchParams } from "next/navigation"
 import { Header } from "@/components/dashboard/header"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -16,6 +18,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import {
   AlertTriangle,
   AlertCircle,
   Info,
@@ -31,9 +41,10 @@ import {
   Thermometer,
 } from "lucide-react"
 import { useState } from "react"
+import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 
-const alerts = [
+const initialAlerts = [
   {
     id: 1,
     severity: "critical",
@@ -136,6 +147,8 @@ const alerts = [
   },
 ]
 
+type AlertItem = (typeof initialAlerts)[number]
+
 const severityConfig = {
   critical: {
     icon: AlertTriangle,
@@ -188,19 +201,32 @@ const alertRules = [
   { id: 7, name: "High Handover Failure", category: "Radio", threshold: "> 5%", enabled: true },
 ]
 
-export default function AlertsPage() {
+const SEVERITY_VALID = ["all", "critical", "warning", "info"] as const
+
+function AlertsContent() {
+  const searchParams = useSearchParams()
+  const severityParam = searchParams.get("severity")
+  const initialSeverity = severityParam && SEVERITY_VALID.includes(severityParam as (typeof SEVERITY_VALID)[number])
+    ? severityParam
+    : "all"
+  const [alerts, setAlerts] = useState<AlertItem[]>(initialAlerts)
   const [search, setSearch] = useState("")
-  const [severityFilter, setSeverityFilter] = useState("all")
+  const [severityFilter, setSeverityFilter] = useState(initialSeverity)
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [rules, setRules] = useState(alertRules)
+  const [muteUntil, setMuteUntil] = useState<number | null>(null)
+  const [configureRule, setConfigureRule] = useState<{ id: number; name: string; threshold: string } | null>(null)
+  const [configureThreshold, setConfigureThreshold] = useState("")
 
+  const isMuted = muteUntil !== null && Date.now() < muteUntil
   const filteredAlerts = alerts.filter((alert) => {
     const matchesSearch =
       alert.title.toLowerCase().includes(search.toLowerCase()) ||
       alert.tower.toLowerCase().includes(search.toLowerCase())
     const matchesSeverity = severityFilter === "all" || alert.severity === severityFilter
     const matchesCategory = categoryFilter === "all" || alert.category === categoryFilter
-    return matchesSearch && matchesSeverity && matchesCategory
+    const notHiddenByMute = !isMuted || alert.severity !== "critical"
+    return matchesSearch && matchesSeverity && matchesCategory && notHiddenByMute
   })
 
   const toggleRule = (id: number) => {
@@ -210,6 +236,34 @@ export default function AlertsPage() {
   const criticalCount = alerts.filter((a) => a.severity === "critical" && a.status !== "resolved").length
   const warningCount = alerts.filter((a) => a.severity === "warning" && a.status !== "resolved").length
   const infoCount = alerts.filter((a) => a.severity === "info" && a.status !== "resolved").length
+
+  const acknowledgeAll = () => {
+    setAlerts((prev) =>
+      prev.map((a) => (a.status === "open" || a.status === "acknowledged" ? { ...a, status: "acknowledged" as const } : a))
+    )
+    toast.success("All alerts acknowledged")
+  }
+  const muteOneHour = () => {
+    setMuteUntil(Date.now() + 60 * 60 * 1000)
+    toast.success("Critical alerts muted for 1 hour")
+  }
+  const acknowledgeOne = (id: number) => {
+    setAlerts((prev) => prev.map((a) => (a.id === id ? { ...a, status: "acknowledged" as const } : a)))
+  }
+  const resolveOne = (id: number) => {
+    setAlerts((prev) => prev.map((a) => (a.id === id ? { ...a, status: "resolved" as const, severity: "resolved" as const } : a)))
+    toast.success("Alert resolved")
+  }
+  const openConfigure = (rule: (typeof alertRules)[number]) => {
+    setConfigureRule({ id: rule.id, name: rule.name, threshold: rule.threshold })
+    setConfigureThreshold(rule.threshold)
+  }
+  const saveConfigure = () => {
+    if (!configureRule) return
+    setRules((prev) => prev.map((r) => (r.id === configureRule.id ? { ...r, threshold: configureThreshold } : r)))
+    setConfigureRule(null)
+    toast.success("Rule updated")
+  }
 
   return (
     <>
@@ -282,11 +336,11 @@ export default function AlertsPage() {
                       <CardDescription>Real-time network alerts requiring attention</CardDescription>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={acknowledgeAll}>
                         <Bell className="mr-2 h-4 w-4" />
                         Acknowledge All
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={muteOneHour}>
                         <BellOff className="mr-2 h-4 w-4" />
                         Mute 1 Hour
                       </Button>
@@ -375,10 +429,10 @@ export default function AlertsPage() {
                           <div className="flex gap-2">
                             {alert.status !== "resolved" && (
                               <>
-                                <Button variant="outline" size="sm">
+                                <Button variant="outline" size="sm" onClick={() => acknowledgeOne(alert.id)}>
                                   Acknowledge
                                 </Button>
-                                <Button variant="default" size="sm">
+                                <Button variant="default" size="sm" onClick={() => resolveOne(alert.id)}>
                                   Resolve
                                 </Button>
                               </>
@@ -432,7 +486,7 @@ export default function AlertsPage() {
                                 {rule.enabled ? "Enabled" : "Disabled"}
                               </Label>
                             </div>
-                            <Button variant="outline" size="sm">
+                            <Button variant="outline" size="sm" onClick={() => openConfigure(rule)}>
                               Configure
                             </Button>
                           </div>
@@ -492,6 +546,36 @@ export default function AlertsPage() {
           </Tabs>
         </div>
       </div>
+
+      <Dialog open={!!configureRule} onOpenChange={(open) => !open && setConfigureRule(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Configure rule</DialogTitle>
+            <DialogDescription>{configureRule?.name}. Set the threshold for this alert.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="threshold">Threshold</Label>
+            <Input
+              id="threshold"
+              value={configureThreshold}
+              onChange={(e) => setConfigureThreshold(e.target.value)}
+              className="bg-secondary"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfigureRule(null)}>Cancel</Button>
+            <Button onClick={saveConfigure}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
+  )
+}
+
+export default function AlertsPage() {
+  return (
+    <Suspense fallback={<div className="flex-1 overflow-auto p-6"><span className="text-muted-foreground">Loading…</span></div>}>
+      <AlertsContent />
+    </Suspense>
   )
 }

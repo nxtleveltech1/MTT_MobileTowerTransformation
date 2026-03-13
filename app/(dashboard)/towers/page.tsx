@@ -1,5 +1,7 @@
 "use client"
 
+import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Header } from "@/components/dashboard/header"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -27,132 +29,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Search, Filter, MoreHorizontal, Radio, MapPin, Signal, Battery, Thermometer } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog"
+import { Search, Filter, MoreHorizontal, Radio, MapPin, Signal, Battery, Thermometer, CheckCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
-
-const towers = [
-  {
-    id: "NG-LAG-001",
-    name: "Lagos Island Central",
-    region: "Lagos",
-    status: "online",
-    technology: "5G NR",
-    prb: 78,
-    users: 1247,
-    throughput: "2.4 Gbps",
-    lat: 6.4541,
-    lng: 3.3947,
-    power: 92,
-    temp: 42,
-    lastUpdate: "2 sec ago",
-  },
-  {
-    id: "NG-LAG-002",
-    name: "Victoria Island",
-    region: "Lagos",
-    status: "online",
-    technology: "LTE-A",
-    prb: 92,
-    users: 2103,
-    throughput: "1.8 Gbps",
-    lat: 6.4281,
-    lng: 3.4219,
-    power: 88,
-    temp: 45,
-    lastUpdate: "5 sec ago",
-  },
-  {
-    id: "NG-ABJ-015",
-    name: "Abuja Central",
-    region: "Abuja",
-    status: "warning",
-    technology: "LTE-A",
-    prb: 95,
-    users: 1856,
-    throughput: "1.2 Gbps",
-    lat: 9.0765,
-    lng: 7.3986,
-    power: 85,
-    temp: 52,
-    lastUpdate: "3 sec ago",
-  },
-  {
-    id: "NG-LAG-042",
-    name: "Ikeja GRA",
-    region: "Lagos",
-    status: "offline",
-    technology: "5G NR",
-    prb: 0,
-    users: 0,
-    throughput: "0 Mbps",
-    lat: 6.5935,
-    lng: 3.3453,
-    power: 0,
-    temp: 28,
-    lastUpdate: "15 min ago",
-  },
-  {
-    id: "NG-PH-008",
-    name: "Port Harcourt Marina",
-    region: "Rivers",
-    status: "online",
-    technology: "LTE",
-    prb: 65,
-    users: 943,
-    throughput: "890 Mbps",
-    lat: 4.7747,
-    lng: 7.0134,
-    power: 95,
-    temp: 38,
-    lastUpdate: "1 sec ago",
-  },
-  {
-    id: "NG-KAN-023",
-    name: "Kano Central",
-    region: "Kano",
-    status: "warning",
-    technology: "LTE-A",
-    prb: 88,
-    users: 1532,
-    throughput: "1.1 Gbps",
-    lat: 12.0022,
-    lng: 8.5919,
-    power: 45,
-    temp: 48,
-    lastUpdate: "8 sec ago",
-  },
-  {
-    id: "NG-IBD-012",
-    name: "Ibadan North",
-    region: "Oyo",
-    status: "online",
-    technology: "LTE",
-    prb: 72,
-    users: 876,
-    throughput: "720 Mbps",
-    lat: 7.3964,
-    lng: 3.9050,
-    power: 91,
-    temp: 40,
-    lastUpdate: "4 sec ago",
-  },
-  {
-    id: "NG-ENU-005",
-    name: "Enugu Central",
-    region: "Enugu",
-    status: "online",
-    technology: "5G NR",
-    prb: 58,
-    users: 654,
-    throughput: "1.9 Gbps",
-    lat: 6.4402,
-    lng: 7.4942,
-    power: 97,
-    temp: 35,
-    lastUpdate: "2 sec ago",
-  },
-]
+import { towers, type Tower } from "@/lib/towers-mock"
 
 const statusConfig = {
   online: { color: "bg-success", label: "Online" },
@@ -161,9 +48,11 @@ const statusConfig = {
 }
 
 export default function TowersPage() {
+  const router = useRouter()
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [regionFilter, setRegionFilter] = useState("all")
+  const [diagnosticsTower, setDiagnosticsTower] = useState<Tower | null>(null)
 
   const filteredTowers = towers.filter((tower) => {
     const matchesSearch =
@@ -353,10 +242,18 @@ export default function TowersPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem>View Details</DropdownMenuItem>
-                              <DropdownMenuItem>View on Map</DropdownMenuItem>
-                              <DropdownMenuItem>Run Diagnostics</DropdownMenuItem>
-                              <DropdownMenuItem>View Logs</DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <Link href={`/towers/${tower.id}`}>View Details</Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => router.push(`/coverage?tower=${encodeURIComponent(tower.id)}`)}>
+                                View on Map
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => setDiagnosticsTower(tower)}>
+                                Run Diagnostics
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <Link href={`/towers/${tower.id}/logs`}>View Logs</Link>
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
@@ -369,6 +266,34 @@ export default function TowersPage() {
           </Card>
         </div>
       </div>
+
+      <Dialog open={!!diagnosticsTower} onOpenChange={(open) => !open && setDiagnosticsTower(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Diagnostics — {diagnosticsTower?.id}</DialogTitle>
+            <DialogDescription>
+              {diagnosticsTower?.name}. Run system checks and view results.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="flex items-center gap-2 rounded-lg border border-border bg-secondary/30 p-3 text-sm">
+              <CheckCircle className="h-4 w-4 text-success" />
+              <span>Connectivity: OK</span>
+            </div>
+            <div className="flex items-center gap-2 rounded-lg border border-border bg-secondary/30 p-3 text-sm">
+              <CheckCircle className="h-4 w-4 text-success" />
+              <span>Hardware: OK</span>
+            </div>
+            <div className="flex items-center gap-2 rounded-lg border border-border bg-secondary/30 p-3 text-sm">
+              <CheckCircle className="h-4 w-4 text-success" />
+              <span>Backhaul: OK</span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Diagnostics completed at {new Date().toLocaleTimeString()}. No issues found.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

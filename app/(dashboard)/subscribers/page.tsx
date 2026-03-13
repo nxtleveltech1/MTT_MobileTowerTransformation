@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { Header } from "@/components/dashboard/header"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -26,7 +27,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { toast } from "sonner"
 import {
   PieChart,
   Pie,
@@ -40,78 +52,10 @@ import {
   YAxis,
   CartesianGrid,
 } from "recharts"
-import { Search, MoreHorizontal, Users, Smartphone, Signal, TrendingUp, UserPlus, UserMinus } from "lucide-react"
+import { Search, MoreHorizontal, Users, Signal, TrendingUp, UserPlus } from "lucide-react"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
-
-const subscribers = [
-  {
-    msisdn: "+234 801 234 5678",
-    imsi: "621301234567890",
-    imei: "353456789012345",
-    status: "active",
-    plan: "Premium",
-    technology: "5G",
-    tower: "NG-LAG-001",
-    dataUsed: "45.2 GB",
-    lastSeen: "2 min ago",
-  },
-  {
-    msisdn: "+234 802 345 6789",
-    imsi: "621302345678901",
-    imei: "353456789012346",
-    status: "active",
-    plan: "Business",
-    technology: "LTE",
-    tower: "NG-LAG-002",
-    dataUsed: "128.5 GB",
-    lastSeen: "Just now",
-  },
-  {
-    msisdn: "+234 803 456 7890",
-    imsi: "621303456789012",
-    imei: "353456789012347",
-    status: "inactive",
-    plan: "Basic",
-    technology: "3G",
-    tower: "NG-ABJ-015",
-    dataUsed: "2.1 GB",
-    lastSeen: "3 days ago",
-  },
-  {
-    msisdn: "+234 804 567 8901",
-    imsi: "621304567890123",
-    imei: "353456789012348",
-    status: "active",
-    plan: "Unlimited",
-    technology: "5G",
-    tower: "NG-PH-008",
-    dataUsed: "312.8 GB",
-    lastSeen: "5 min ago",
-  },
-  {
-    msisdn: "+234 805 678 9012",
-    imsi: "621305678901234",
-    imei: "353456789012349",
-    status: "roaming",
-    plan: "Premium",
-    technology: "LTE",
-    tower: "GH-ACC-001",
-    dataUsed: "8.9 GB",
-    lastSeen: "1 hour ago",
-  },
-  {
-    msisdn: "+234 806 789 0123",
-    imsi: "621306789012345",
-    imei: "353456789012350",
-    status: "suspended",
-    plan: "Basic",
-    technology: "LTE",
-    tower: "NG-KAN-023",
-    dataUsed: "0 GB",
-    lastSeen: "30 days ago",
-  },
-]
+import { subscribers, msisdnToSlug, type Subscriber } from "@/lib/subscribers-mock"
 
 const planDistribution = [
   { name: "Premium", value: 35, color: "oklch(0.7 0.15 160)" },
@@ -148,6 +92,14 @@ const statusConfig = {
 export default function SubscribersPage() {
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
+  const [suspendSub, setSuspendSub] = useState<Subscriber | null>(null)
+
+  const handleConfirmSuspend = () => {
+    if (suspendSub) {
+      toast.success("Account suspended", { description: `${suspendSub.msisdn} has been suspended.` })
+      setSuspendSub(null)
+    }
+  }
 
   const filteredSubscribers = subscribers.filter((sub) => {
     const matchesSearch =
@@ -312,10 +264,21 @@ export default function SubscribersPage() {
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                  <DropdownMenuItem>View Profile</DropdownMenuItem>
-                                  <DropdownMenuItem>View CDRs</DropdownMenuItem>
-                                  <DropdownMenuItem>View Location History</DropdownMenuItem>
-                                  <DropdownMenuItem>Suspend Account</DropdownMenuItem>
+                                  <DropdownMenuItem asChild>
+                                    <Link href={`/subscribers/${msisdnToSlug(sub.msisdn)}`}>View Profile</Link>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem asChild>
+                                    <Link href={`/subscribers/${msisdnToSlug(sub.msisdn)}?tab=cdrs`}>View CDRs</Link>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem asChild>
+                                    <Link href={`/subscribers/${msisdnToSlug(sub.msisdn)}?tab=location`}>View Location History</Link>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    className="text-destructive focus:text-destructive"
+                                    onSelect={() => setSuspendSub(sub)}
+                                  >
+                                    Suspend Account
+                                  </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             </TableCell>
@@ -456,6 +419,23 @@ export default function SubscribersPage() {
           </Tabs>
         </div>
       </div>
+
+      <AlertDialog open={!!suspendSub} onOpenChange={(open) => !open && setSuspendSub(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Suspend account</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will suspend the subscriber {suspendSub?.msisdn}. They will not be able to use the network until reactivated.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmSuspend} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Suspend
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }

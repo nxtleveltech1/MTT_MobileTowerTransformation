@@ -37,7 +37,7 @@ export function Sidebar() {
     <aside
       className={cn(
         "flex flex-col border-r border-border bg-sidebar transition-all duration-300",
-        collapsed ? "w-16" : "w-64"
+        collapsed ? "w-16" : "w-[248px]"
       )}
     >
       <div className="flex min-h-16 items-center justify-between border-b border-border px-4 py-3">

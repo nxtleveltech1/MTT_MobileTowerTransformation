@@ -1,5 +1,28 @@
 import type { TowerLocation } from "@/components/coverage/coverage-map"
 
+const TOWER_ID_TO_REGION: Record<string, string> = {
+  JHB: "gauteng",
+  PTA: "gauteng",
+  CPT: "western-cape",
+  DBN: "kwazulu-natal",
+  PE: "eastern-cape",
+  BFN: "free-state",
+  POL: "limpopo",
+  NEL: "mpumalanga",
+  RSB: "north-west",
+  KIM: "northern-cape",
+}
+
+export function getRegionSlugFromTowerId(id: string): string {
+  const prefix = id.slice(3, 6)
+  return TOWER_ID_TO_REGION[prefix] ?? "other"
+}
+
+export function filterTowersByRegion(towers: TowerLocation[], regionSlug: string): TowerLocation[] {
+  if (regionSlug === "all") return towers
+  return towers.filter((t) => getRegionSlugFromTowerId(t.id) === regionSlug)
+}
+
 function offset(id: string, baseLat: number, baseLng: number): [number, number] {
   const h = id.split("").reduce((a, c) => a + c.charCodeAt(0), 0)
   const latOff = ((h % 31) - 15) * 0.0008

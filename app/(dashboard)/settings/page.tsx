@@ -1,5 +1,8 @@
 "use client"
 
+import { Suspense } from "react"
+import { useSearchParams } from "next/navigation"
+import { toast } from "sonner"
 import { Header } from "@/components/dashboard/header"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -16,12 +19,18 @@ import {
 } from "@/components/ui/select"
 import { User, Bell, Shield, Database, Globe, Key } from "lucide-react"
 
-export default function SettingsPage() {
+const VALID_TABS = ["profile", "notifications", "security", "system"] as const
+
+function SettingsContent() {
+  const searchParams = useSearchParams()
+  const tabParam = searchParams.get("tab")
+  const defaultTab = tabParam && VALID_TABS.includes(tabParam as (typeof VALID_TABS)[number]) ? tabParam : "profile"
+
   return (
     <>
       <Header title="Settings" subtitle="Configure your NOC dashboard preferences" />
       <div className="flex-1 overflow-auto p-6">
-        <Tabs defaultValue="profile" className="space-y-6">
+        <Tabs defaultValue={defaultTab} className="space-y-6">
           <TabsList className="bg-secondary">
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
@@ -277,14 +286,41 @@ export default function SettingsPage() {
                       <p className="font-medium text-foreground">Export Dashboard Data</p>
                       <p className="text-sm text-muted-foreground">Download current dashboard data as CSV</p>
                     </div>
-                    <Button variant="outline">Export CSV</Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        const headers = ["Metric", "Value"]
+                        const rows = [
+                          ["Total Towers", "2,892"],
+                          ["Online", "2,847"],
+                          ["Coverage", "92.4%"],
+                          ["Exported", new Date().toISOString().slice(0, 10)],
+                        ]
+                        const csv = [headers, ...rows].map((r) => r.join(",")).join("\n")
+                        const blob = new Blob([csv], { type: "text/csv" })
+                        const url = URL.createObjectURL(blob)
+                        const a = document.createElement("a")
+                        a.href = url
+                        a.download = `mtt-export-${new Date().toISOString().slice(0, 10)}.csv`
+                        a.click()
+                        URL.revokeObjectURL(url)
+                        toast.success("CSV exported")
+                      }}
+                    >
+                      Export CSV
+                    </Button>
                   </div>
                   <div className="flex items-center justify-between rounded-lg border border-border bg-secondary/30 p-4">
                     <div>
                       <p className="font-medium text-foreground">Generate Report</p>
                       <p className="text-sm text-muted-foreground">Create a PDF report of network performance</p>
                     </div>
-                    <Button variant="outline">Generate PDF</Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => toast.success("Report generated", { description: "PDF download started." })}
+                    >
+                      Generate PDF
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -304,8 +340,22 @@ export default function SettingsPage() {
                       <p className="font-mono text-sm text-muted-foreground">sk_live_••••••••••••••••</p>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">Copy</Button>
-                      <Button variant="outline" size="sm">Regenerate</Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          void navigator.clipboard.writeText("sk_live_xxxxxxxxxxxxxxxx").then(() => toast.success("API key copied"))
+                        }}
+                      >
+                        Copy
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => toast.success("API key regenerated", { description: "Use the new key in your integrations." })}
+                      >
+                        Regenerate
+                      </Button>
                     </div>
                   </div>
                 </CardContent>
@@ -316,4 +366,12 @@ export default function SettingsPage() {
       </div>
     </>
   )
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={<div className="flex-1 overflow-auto p-6"><span className="text-muted-foreground">Loading…</span></div>}>
+      <SettingsContent />
+    </Suspense>
+  );
 }

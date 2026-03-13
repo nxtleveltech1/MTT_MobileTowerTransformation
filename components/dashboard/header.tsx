@@ -1,6 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useClerk } from "@clerk/nextjs"
 import { Bell, Search, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -21,7 +24,13 @@ interface HeaderProps {
 
 export function Header({ title, subtitle }: HeaderProps) {
   const [mounted, setMounted] = useState(false)
+  const router = useRouter()
+  const { signOut } = useClerk()
   useEffect(() => setMounted(true), [])
+
+  const handleSignOut = () => {
+    signOut({ redirectUrl: "/sign-in" })
+  }
 
   return (
     <header className="flex h-16 items-center justify-between border-b border-border bg-card px-6">
@@ -55,17 +64,21 @@ export function Header({ title, subtitle }: HeaderProps) {
               <DropdownMenuContent align="end" className="w-80">
                 <DropdownMenuLabel>Notifications</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="flex flex-col items-start gap-1">
+                <DropdownMenuItem className="flex flex-col items-start gap-1 cursor-pointer" onSelect={() => router.push("/alerts?severity=critical")}>
                   <span className="font-medium">Critical: Tower NG-LAG-042 offline</span>
                   <span className="text-xs text-muted-foreground">2 minutes ago</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="flex flex-col items-start gap-1">
+                <DropdownMenuItem className="flex flex-col items-start gap-1 cursor-pointer" onSelect={() => router.push("/alerts?severity=warning")}>
                   <span className="font-medium">Warning: High PRB usage at NG-ABJ-015</span>
                   <span className="text-xs text-muted-foreground">15 minutes ago</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="flex flex-col items-start gap-1">
+                <DropdownMenuItem className="flex flex-col items-start gap-1 cursor-pointer" onSelect={() => router.push("/alerts")}>
                   <span className="font-medium">Info: Scheduled maintenance completed</span>
                   <span className="text-xs text-muted-foreground">1 hour ago</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={() => router.push("/alerts")} className="justify-center font-medium">
+                  View all alerts
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -81,10 +94,14 @@ export function Header({ title, subtitle }: HeaderProps) {
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>NOC Operator</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Profile</DropdownMenuItem>
-                <DropdownMenuItem>Preferences</DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/settings?tab=profile">Profile</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/settings?tab=notifications">Preferences</Link>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Sign out</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleSignOut}>Sign out</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </>
