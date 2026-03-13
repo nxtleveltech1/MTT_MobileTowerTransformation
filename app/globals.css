@@ -132,3 +132,8 @@
     @apply bg-background text-foreground;
   }
 }
+
+.leaflet-container .tower-marker {
+  background: transparent !important;
+  border: none !important;
+}

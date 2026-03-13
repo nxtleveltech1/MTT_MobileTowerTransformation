@@ -2,41 +2,40 @@
 
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet"
 import L from "leaflet"
-import { cn } from "@/lib/utils"
 import "leaflet/dist/leaflet.css"
 
 const SOUTH_AFRICA_CENTER: [number, number] = [-29.0, 24.0]
 const DEFAULT_ZOOM = 5
 
-const statusColors = {
-  online: "hsl(var(--success))",
-  warning: "hsl(var(--warning))",
-  offline: "hsl(var(--destructive))",
+const statusColors: Record<string, { fill: string; ring: string }> = {
+  online: { fill: "#22c55e", ring: "#16a34a" },
+  warning: { fill: "#eab308", ring: "#ca8a04" },
+  offline: { fill: "#ef4444", ring: "#dc2626" },
 }
 
 function createStatusIcon(status: keyof typeof statusColors) {
-  const color = statusColors[status]
+  const { fill, ring } = statusColors[status] ?? statusColors.online
   return L.divIcon({
     className: "tower-marker",
     html: `
       <div style="
-        width: 24px;
-        height: 24px;
+        width: 36px;
+        height: 36px;
         border-radius: 50%;
-        background: ${color};
-        border: 2px solid ${color};
-        box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        background: ${fill};
+        border: 3px solid ${ring};
+        box-shadow: 0 2px 8px rgba(0,0,0,0.4), 0 0 0 2px rgba(255,255,255,0.3);
         display: flex;
         align-items: center;
         justify-content: center;
       ">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2">
           <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
         </svg>
       </div>
     `,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
+    iconSize: [36, 36],
+    iconAnchor: [18, 18],
   })
 }
 
@@ -76,21 +75,26 @@ export function CoverageMap({ towers, onTowerSelect }: CoverageMapProps) {
           }}
         >
           <Popup>
-            <div className="min-w-[180px] p-1">
-              <div className="font-medium text-sm">{tower.name}</div>
-              <div className="text-xs text-muted-foreground mt-1">{tower.id}</div>
-              <div className="flex items-center gap-2 mt-2 text-xs">
+            <div style={{ minWidth: 200, padding: 8 }}>
+              <div style={{ fontWeight: 600, fontSize: 14 }}>{tower.name}</div>
+              <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 4 }}>{tower.id}</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, fontSize: 12 }}>
                 <span
-                  className={cn(
-                    "inline-block w-2 h-2 rounded-full",
-                    tower.status === "online" && "bg-success",
-                    tower.status === "warning" && "bg-warning",
-                    tower.status === "offline" && "bg-destructive"
-                  )}
+                  style={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: "50%",
+                    backgroundColor:
+                      tower.status === "online"
+                        ? "#22c55e"
+                        : tower.status === "warning"
+                          ? "#eab308"
+                          : "#ef4444",
+                  }}
                 />
-                {tower.status}
+                <span style={{ textTransform: "capitalize" }}>{tower.status}</span>
               </div>
-              <div className="mt-2 text-xs text-muted-foreground">
+              <div style={{ marginTop: 8, fontSize: 12, color: "#94a3b8" }}>
                 {tower.users.toLocaleString()} users · {tower.signal}% signal
               </div>
             </div>

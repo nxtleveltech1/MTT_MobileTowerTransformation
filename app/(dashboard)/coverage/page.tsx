@@ -16,6 +16,7 @@ import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { Signal, Users, Zap, Layers, MapPin, Radio } from "lucide-react"
 import type { TowerLocation } from "@/components/coverage/coverage-map"
+import { towerLocations } from "@/lib/mock-towers"
 
 const CoverageMap = dynamic(
   () => import("@/components/coverage/coverage-map").then((m) => m.CoverageMap),
@@ -29,18 +30,6 @@ const CoverageMap = dynamic(
   }
 )
 
-// Tower data with coordinates for South Africa
-const towerLocations: TowerLocation[] = [
-  { id: "ZA-JHB-001", name: "Johannesburg CBD", lat: -26.2041, lng: 28.0473, status: "online", users: 2847, signal: 95 },
-  { id: "ZA-JHB-002", name: "Sandton", lat: -26.1076, lng: 28.0567, status: "online", users: 3201, signal: 92 },
-  { id: "ZA-JHB-042", name: "Soweto", lat: -26.2485, lng: 27.8540, status: "offline", users: 0, signal: 0 },
-  { id: "ZA-CPT-015", name: "Cape Town Central", lat: -33.9249, lng: 18.4241, status: "warning", users: 2156, signal: 78 },
-  { id: "ZA-DBN-008", name: "Durban Harbour", lat: -29.8587, lng: 31.0218, status: "online", users: 1943, signal: 88 },
-  { id: "ZA-PTA-023", name: "Pretoria Central", lat: -25.7479, lng: 28.2293, status: "warning", users: 1532, signal: 72 },
-  { id: "ZA-BFN-012", name: "Bloemfontein", lat: -29.1167, lng: 26.2167, status: "online", users: 876, signal: 90 },
-  { id: "ZA-PE-005", name: "Gqeberha", lat: -33.9608, lng: 25.6022, status: "online", users: 654, signal: 94 },
-]
-
 const regionStats = [
   { region: "Gauteng", towers: 892, coverage: 98, users: "2.1M" },
   { region: "Western Cape", towers: 486, coverage: 95, users: "1.2M" },
@@ -49,6 +38,9 @@ const regionStats = [
   { region: "Free State", towers: 187, coverage: 85, users: "420K" },
   { region: "Limpopo", towers: 176, coverage: 89, users: "380K" },
 ]
+
+const totalTowers = towerLocations.length
+const totalUsers = towerLocations.reduce((s, t) => s + t.users, 0)
 
 const statusColors = {
   online: "bg-success",
@@ -107,18 +99,18 @@ export default function CoveragePage() {
                     onTowerSelect={setSelectedTower}
                   />
 
-                  <div className="absolute bottom-4 left-4 z-[1000] flex items-center gap-4 rounded-lg border border-border bg-card/95 p-3 backdrop-blur">
+                  <div className="absolute bottom-4 left-4 z-[1000] flex items-center gap-5 rounded-lg border border-border bg-card/95 px-4 py-3 backdrop-blur">
                     <div className="flex items-center gap-2">
-                      <div className="h-3 w-3 rounded-full bg-success" />
-                      <span className="text-xs text-foreground">Online</span>
+                      <div className="h-4 w-4 rounded-full border-2 border-green-600 bg-green-500 shadow-sm" />
+                      <span className="text-sm font-medium text-foreground">Online</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="h-3 w-3 rounded-full bg-warning" />
-                      <span className="text-xs text-foreground">Warning</span>
+                      <div className="h-4 w-4 rounded-full border-2 border-amber-600 bg-amber-500 shadow-sm" />
+                      <span className="text-sm font-medium text-foreground">Warning</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="h-3 w-3 rounded-full bg-destructive" />
-                      <span className="text-xs text-foreground">Offline</span>
+                      <div className="h-4 w-4 rounded-full border-2 border-red-600 bg-red-500 shadow-sm" />
+                      <span className="text-sm font-medium text-foreground">Offline</span>
                     </div>
                   </div>
 
@@ -156,7 +148,7 @@ export default function CoveragePage() {
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Total Towers</span>
-                  <span className="font-bold text-foreground">2,892</span>
+                  <span className="font-bold text-foreground">{totalTowers.toLocaleString()}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Coverage Area</span>
@@ -164,7 +156,9 @@ export default function CoveragePage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Active Users</span>
-                  <span className="font-bold text-foreground">5.4M</span>
+                  <span className="font-bold text-foreground">
+                    {totalUsers >= 1_000_000 ? `${(totalUsers / 1_000_000).toFixed(1)}M` : totalUsers.toLocaleString()}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Avg Signal</span>
